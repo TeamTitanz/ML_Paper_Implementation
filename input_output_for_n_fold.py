@@ -50,7 +50,7 @@ for line in lines:
     # vI = []
     documentId = line.split(';')[0]
     documentId = documentId.lstrip("0")
-    print documentId + "/" + "2500"
+    print documentId + "/" + str(len(lines))
     referencesList = line.split(';')[1].split(',')
 
     if ('' in referencesList):
