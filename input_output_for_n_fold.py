@@ -1,20 +1,13 @@
-import numpy as np
-import pandas as pd
-import pickle as p
-from matplotlib import pyplot as plt
-from sklearn.neural_network import MLPClassifier
-from sklearn.neural_network import MLPRegressor
-from sklearn.model_selection import train_test_split
-import cPickle as cpickle
-from gensim.models import Word2Vec
-from gensim.models import KeyedVectors
+import cPickle as p
 import os.path
+
+from gensim.models import KeyedVectors
 
 a_value = 'a2'
 p_value = 'p750'
 inputArray = []
 outputArray = []
-prediction_file = open('predictions_' + a_value + '_' + p_value + '.pickle', 'r')
+prediction_file = open('predictions_' + a_value + '_' + p_value + '.pickle', 'rb')
 predictions = p.load(prediction_file)
 
 # Load Node2Vec Trained Model
@@ -102,16 +95,17 @@ for line in lines:
     # print outputArray[0]
     index += 1
 
+print "start"
 print len(inputArray)
 print len(outputArray)
 
 print "Saving input..."
-input_file = open('input[X]_' + a_value + '_' + p_value + '.pickle', 'w')
+input_file = open('input[X]_' + a_value + '_' + p_value + '.pickle', 'wb')
 p.dump(inputArray, input_file)
 print "Input saved"
 
 # save output
 print "Saving output..."
-output_file = open('output[Y]_' + a_value + '_' + p_value + '.pickle', 'w')
+output_file = open('output[Y]_' + a_value + '_' + p_value + '.pickle', 'wb')
 p.dump(outputArray, output_file)
 print "Output saved"
