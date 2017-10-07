@@ -1,20 +1,14 @@
-import numpy as np
-import pandas as pd
-import pickle as p
-from matplotlib import pyplot as plt
-from sklearn.neural_network import MLPClassifier
-from sklearn.neural_network import MLPRegressor
-from sklearn.model_selection import train_test_split
-import cPickle as cpickle
-from gensim.models import Word2Vec
-from gensim.models import KeyedVectors
+import cPickle as p
 import os.path
+import numpy as np
+from gensim.models import KeyedVectors
+from sklearn.neural_network import MLPRegressor
 
 a_value = 'a2'
 p_value = 'p750'
 inputArray = []
 outputArray = []
-prediction_file = open('predictions_' + a_value + '_' + p_value + '.pickle', 'r')
+prediction_file = open('predictions_' + a_value + '_' + p_value + '.pickle', 'rb')
 predictions = p.load(prediction_file)
 
 # Load Node2Vec Trained Model
@@ -30,27 +24,29 @@ with open(currentPath + '/' + mentionMap) as f:
     # stripping the newline character
     lines = [x.strip() for x in lines]
 
-max = 0
+"""
+maxRefLength = 0
 for line in lines:
     if (';') in line:
         document = line.split(';')[0]
         referencesList = line.split(';')[1].split(',')
-        if max < len(referencesList):
-            max = len(referencesList)
-outputCount = 250
+        if maxRefLength < len(referencesList):
+            maxRefLength = len(referencesList)
+"""
+outputCount = 100
 
 recall = 0.0
 index = 0
-xData = []
-yData = []
+# xData = []
+# yData = []
 for line in lines:
 
     inputElement = []
     outputElement = []
-    vI = []
+    # vI = []
     documentId = line.split(';')[0]
     documentId = documentId.lstrip("0")
-    print documentId + "/" + "2500"
+    print documentId + "/" + str(len(lines))
     referencesList = line.split(';')[1].split(',')
 
     if ('' in referencesList):
@@ -59,41 +55,41 @@ for line in lines:
     if (documentId in referencesList):
         referencesList = filter(lambda a: a != documentId, referencesList)
 
-    word2vec_model_output = node2vec_model.similar_by_vector(predictions[index], topn=outputCount)
+    prediction = predictions[index]
+    word2vec_model_output = node2vec_model.similar_by_vector(prediction, topn=outputCount)
 
-    for a in predictions[index]:
-        vI.append(a)
+    for a in prediction:
+        # vI.append(a)
         inputElement.append(a)
 
-        # create a list of the documents only, returned by the model. Remove the vector values
-        modelReturnedDocumentList = []
+    # create a list of the documents only, returned by the model. Remove the vector values
+    modelReturnedDocumentList = []
     for i in range(0, len(word2vec_model_output)):
         modelReturnedDocumentList.append(str(word2vec_model_output[i][0]))
 
     # print vI, ",",
-    rData = []
-    b_I = []
+    # rData = []
+    # b_I = []
     # print referencesList
     # print modelReturnedDocumentList
     for similarCase in modelReturnedDocumentList:
-        v_rI = []
+        # v_rI = []
         if (similarCase in referencesList):
-            b_I.append(1)
+            # b_I.append(1)
             outputElement.append(1)
         else:
-            b_I.append(0)
+            # b_I.append(0)
             outputElement.append(0)
 
         for b in node2vec_model.__getitem__(similarCase):
-            v_rI.append(b)
+            # v_rI.append(b)
             inputElement.append(b)
 
-        rData.append(v_rI)
-        # print v_rI
+            # rData.append(v_rI)
+            # print v_rI
 
-    xData.append([vI, rData])
-    yData.append(b_I)
-
+    # xData.append([vI, rData])
+    # yData.append(b_I)
     # print xData[0]
     # print yData[0]
     inputArray.append(inputElement)
@@ -102,19 +98,27 @@ for line in lines:
     # print outputArray[0]
     index += 1
 
-print len(inputArray)
-print len(outputArray)
+# print len(inputArray)
+# print len(outputArray)
+print "Input & Output created."
 
-# lvInput = np.array(inputArray)
-# lvTarget = np.array(outputArray)
-#
-# # for p750
-# clf = MLPRegressor(solver='lbfgs', activation='logistic', alpha=0.001, hidden_layer_sizes=(250,), random_state=1,
-#                    max_iter=2000, learning_rate='adaptive'
-#                    , verbose='True')
-# clf.fit(lvInput, lvTarget)
-#
-# n_fold_id = 1
-# # save model file
-# model_file = open('model[n_fold_' + n_fold_id + ']_' + a_value + '_' + p_value + '.pickle', 'w')
-# p.dump(clf, model_file)
+# for p750
+clf = MLPRegressor(solver='lbfgs', activation='logistic', alpha=0.001, hidden_layer_sizes=(250,), random_state=1,
+                   max_iter=2000, learning_rate='adaptive'
+                   , verbose='True')
+
+for n in range(0, 2500, 250):
+    n_fold_id = (n / 250) + 1
+
+    lvInput = np.array(inputArray[0: n] + inputArray[n + 250:])
+    lvTarget = np.array(outputArray[0: n] + outputArray[n + 250:])
+
+    print "Training model No:", n_fold_id
+    clf.fit(lvInput, lvTarget)
+
+    # save model file
+    model_file = open('model[n_fold_' + str(n_fold_id) + ']_' + a_value + '_' + p_value + '.pickle', 'wb')
+    p.dump(clf, model_file)
+    print n_fold_id, " model saved"
+
+print "All done"
